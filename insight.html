@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#E9E6DF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>통찰 洞察</title>
+<style>
+  :root{
+    --paper:#E9E6DF;
+    --ink:#26251F;
+    --ink-soft:#6E6A5E;
+    --green:#2F4A3E;
+    --red:#8C3B2E;
+    --line:#C6C0B4;
+    --cell:#F3F1EB;
+    --safe-b:env(safe-area-inset-bottom, 0px);
+    --safe-t:env(safe-area-inset-top, 0px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;}
+  html,body{height:100%;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family: Georgia, "Noto Serif KR", "Nanum Myeongjo", "AppleMyungjo", Batang, serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.6;
+    user-select:none;
+    -webkit-user-select:none;
+    overscroll-behavior-y:none;
+  }
+  .wrap{
+    max-width:440px;
+    margin:0 auto;
+    padding:calc(36px + var(--safe-t)) 20px 40px;
+  }
+
+  /* ---------- 홈 ---------- */
+  .home-title{
+    text-align:center;
+    font-size:14px;
+    letter-spacing:0.55em;
+    text-indent:0.55em;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+  }
+  .home-hanja{
+    text-align:center;
+    font-size:56px;
+    font-weight:400;
+    letter-spacing:0.18em;
+    text-indent:0.18em;
+    line-height:1.2;
+    margin-bottom:22px;
+  }
+  .home-sub{
+    text-align:center;
+    font-size:14.5px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .home-rulenote{
+    text-align:center;
+    font-size:12px;
+    color:var(--ink-soft);
+    opacity:0.75;
+    margin-bottom:40px;
+  }
+  .hr{width:36px;height:1px;background:var(--line);margin:0 auto 40px;}
+  .levels{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+  }
+  .level-card{
+    aspect-ratio:1/1;
+    background:var(--cell);
+    border:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    font-family:inherit;
+    font-size:26px;
+    color:var(--ink);
+    transition:transform .1s ease, border-color .25s ease;
+    padding:0;
+  }
+  .level-card:active{transform:scale(0.95);background:#fff;}
+  .level-card:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
+  .level-card .solved-dot{
+    width:9px;height:9px;border-radius:50%;
+    border:1.5px solid var(--green);
+    opacity:0;transition:opacity .3s;
+  }
+  .level-card.solved .solved-dot{opacity:1;}
+  .level-card.solved{border-color:var(--green);}
+
+  /* ---------- 레벨 화면 ---------- */
+  #level .wrap{padding-bottom:calc(140px + var(--safe-b));}
+  .topbar{
+    position:sticky;
+    top:0;
+    z-index:5;
+    background:linear-gradient(var(--paper) 82%, rgba(233,230,223,0));
+    display:flex;align-items:center;justify-content:space-between;
+    padding:calc(14px + var(--safe-t)) 0 18px;
+    margin-bottom:22px;
+  }
+  .back{
+    background:none;border:none;
+    font-family:inherit;font-size:15px;color:var(--ink-soft);
+    letter-spacing:0.08em;
+    padding:10px 14px 10px 0;
+  }
+  .back:active{color:var(--ink);}
+  .back:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
+  .level-numeral{font-size:28px;letter-spacing:0.1em;}
+  .level-solvedmark{
+    font-size:15px;color:var(--green);letter-spacing:0.2em;
+    min-width:2.2em;text-align:right;
+    opacity:0;transition:opacity .4s;
+  }
+  .level-solvedmark.show{opacity:1;}
+
+  .ex-section{margin-bottom:30px;}
+  .ex-label{
+    font-size:12.5px;color:var(--ink-soft);
+    letter-spacing:0.25em;margin-bottom:12px;
+    display:flex;align-items:center;gap:9px;
+  }
+  .ex-label .mark{font-size:16px;}
+  .ex-label .mark.o{color:var(--green);}
+  .ex-label .mark.x{color:var(--red);}
+  .ex-row{
+    display:flex;gap:12px;
+    justify-content:space-between;
+  }
+  .mini{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    flex:1;
+    aspect-ratio:1/1;
+    max-width:104px;
+    border:1px solid var(--line);
+    background:var(--cell);
+  }
+  .mini div{border:0.5px solid var(--line);}
+  .mini div.f{background:var(--ink);}
+
+  .play-section{margin-top:36px;}
+  .play-label{
+    font-size:12.5px;color:var(--ink-soft);letter-spacing:0.25em;
+    margin-bottom:12px;
+  }
+  .board-holder{position:relative;width:100%;max-width:340px;margin:0 auto;}
+  .board{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    width:100%;
+    aspect-ratio:1/1;
+    border:1px solid var(--ink-soft);
+    background:var(--cell);
+  }
+  .board button{
+    border:0.5px solid var(--line);
+    background:transparent;
+    padding:0;
+    transition:background .1s ease;
+  }
+  .board button:active{background:#fff;}
+  .board button.f{background:var(--ink);}
+  .board button.f:active{background:#3a382f;}
+  .board button:focus-visible{outline:2px solid var(--green);outline-offset:-2px;z-index:1;position:relative;}
+
+  .stamp{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    pointer-events:none;
+    opacity:0;
+  }
+  .stamp svg{width:70%;height:70%;overflow:visible;}
+  .stamp.play{animation:stampIn 1.5s ease forwards;}
+  @keyframes stampIn{
+    0%{opacity:0;transform:scale(1.15);}
+    12%{opacity:1;transform:scale(1);}
+    75%{opacity:1;}
+    100%{opacity:0;}
+  }
+  .stamp circle{
+    fill:none;stroke:var(--green);stroke-width:6;
+    stroke-linecap:round;
+    stroke-dasharray:290;stroke-dashoffset:290;
+  }
+  .stamp.play circle{animation:draw .5s ease forwards;}
+  .stamp line{
+    stroke:var(--red);stroke-width:6;stroke-linecap:round;
+    stroke-dasharray:130;stroke-dashoffset:130;
+  }
+  .stamp.play line{animation:draw .35s ease forwards;}
+  .stamp.play line:nth-child(2){animation-delay:.18s;}
+  @keyframes draw{to{stroke-dashoffset:0;}}
+  @media (prefers-reduced-motion:reduce){
+    .stamp.play{animation:none;opacity:1;}
+    .stamp.play circle,.stamp.play line{animation:none;stroke-dashoffset:0;}
+  }
+
+  .notice{
+    text-align:center;
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-top:16px;
+    min-height:1.6em;
+    opacity:0;
+    transition:opacity .3s;
+  }
+  .notice.show{opacity:1;}
+
+  /* 하단 고정 판정 바 — 엄지 닿는 곳 */
+  .controlbar{
+    position:fixed;
+    left:0;right:0;bottom:0;
+    z-index:10;
+    background:linear-gradient(rgba(233,230,223,0), var(--paper) 30%);
+    padding:22px 20px calc(18px + var(--safe-b));
+  }
+  .controlbar-inner{
+    max-width:440px;margin:0 auto;
+    display:flex;gap:12px;
+  }
+  .btn{
+    font-family:inherit;font-size:16px;letter-spacing:0.15em;text-indent:0.15em;
+    padding:16px 0;
+    border:1px solid var(--ink);
+    background:var(--ink);color:var(--paper);
+    flex:2;
+    transition:opacity .15s, transform .1s;
+  }
+  .btn:active{opacity:0.8;transform:scale(0.98);}
+  .btn.ghost{background:transparent;color:var(--ink-soft);border-color:var(--line);flex:1;}
+  .btn.ghost:active{color:var(--ink);border-color:var(--ink-soft);opacity:1;}
+  .btn:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
+
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+
+<noscript>
+  <div style="max-width:440px;margin:16px auto 0;padding:14px 18px;border:1px solid #8C3B2E;color:#8C3B2E;font-size:13.5px;text-align:center;line-height:1.7;">
+    이 문서 뷰어에서는 게임이 실행되지 않습니다.<br>
+    우측 하단 공유 버튼 → <b>Safari로 열기</b>를 선택해 주세요.
+  </div>
+</noscript>
+<div id="home">
+  <div class="wrap">
+    <p class="home-title">통 찰</p>
+    <h1 class="home-hanja">洞察</h1>
+    <p class="home-sub">규칙은 설명되지 않는다.<br>○와 ✕만이 말한다.</p>
+    <p class="home-rulenote">예시와 똑같은 답은 인정되지 않는다.</p>
+    <div class="hr"></div>
+    <div class="levels" id="levels">
+      <button class="level-card" data-i="0" aria-label="레벨 1"><span>一</span><span class='solved-dot'></span></button>
+      <button class="level-card" data-i="1" aria-label="레벨 2"><span>二</span><span class='solved-dot'></span></button>
+      <button class="level-card" data-i="2" aria-label="레벨 3"><span>三</span><span class='solved-dot'></span></button>
+      <button class="level-card" data-i="3" aria-label="레벨 4"><span>四</span><span class='solved-dot'></span></button>
+      <button class="level-card" data-i="4" aria-label="레벨 5"><span>五</span><span class='solved-dot'></span></button>
+      <button class="level-card" data-i="5" aria-label="레벨 6"><span>六</span><span class='solved-dot'></span></button>
+      <button class="level-card" data-i="6" aria-label="레벨 7"><span>七</span><span class='solved-dot'></span></button>
+      <button class="level-card" data-i="7" aria-label="레벨 8"><span>八</span><span class='solved-dot'></span></button>
+      <button class="level-card" data-i="8" aria-label="레벨 9"><span>九</span><span class='solved-dot'></span></button>
+      <button class="level-card" data-i="9" aria-label="레벨 10"><span>十</span><span class='solved-dot'></span></button>
+      <button class="level-card" data-i="10" aria-label="레벨 11"><span>十一</span><span class='solved-dot'></span></button>
+      <button class="level-card" data-i="11" aria-label="레벨 12"><span>十二</span><span class='solved-dot'></span></button>
+    </div>
+  </div>
+</div>
+
+<div id="level" class="hidden">
+  <div class="wrap">
+    <div class="topbar">
+      <button class="back" id="backBtn">← 목록</button>
+      <span class="level-numeral" id="numeral"></span>
+      <span class="level-solvedmark" id="solvedMark">解</span>
+    </div>
+
+    <div class="ex-section">
+      <div class="ex-label"><span class="mark o">○</span><span>규칙을 만족한다</span></div>
+      <div class="ex-row" id="posRow"></div>
+    </div>
+
+    <div class="ex-section">
+      <div class="ex-label"><span class="mark x">✕</span><span>만족하지 않는다</span></div>
+      <div class="ex-row" id="negRow"></div>
+    </div>
+
+    <div class="play-section">
+      <div class="play-label">당신의 답</div>
+      <div class="board-holder">
+        <div class="board" id="board" role="grid" aria-label="답안 격자"></div>
+        <div class="stamp" id="stamp"></div>
+      </div>
+      <p class="notice" id="notice"></p>
+    </div>
+  </div>
+
+  <div class="controlbar">
+    <div class="controlbar-inner">
+      <button class="btn ghost" id="clearBtn">비우기</button>
+      <button class="btn" id="judgeBtn">판정</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- 판정 함수 ---------- */
+const N = 4;
+const idx = (r,c) => r*N+c;
+const count = g => g.reduce((a,b)=>a+b,0);
+
+function colCount(g,c){ let s=0; for(let r=0;r<N;r++) s+=g[idx(r,c)]; return s; }
+function rowCount(g,r){ let s=0; for(let c=0;c<N;c++) s+=g[idx(r,c)]; return s; }
+
+function mirrorLR(g){
+  if(count(g)===0) return false;
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++)
+    if(g[idx(r,c)]!==g[idx(r,N-1-c)]) return false;
+  return true;
+}
+function noAdjacent(g){
+  if(count(g)===0) return false;
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+    if(!g[idx(r,c)]) continue;
+    if(c+1<N && g[idx(r,c+1)]) return false;
+    if(r+1<N && g[idx(r+1,c)]) return false;
+  }
+  return true;
+}
+function connected(g){
+  const total = count(g);
+  if(total===0) return false;
+  let start=-1;
+  for(let i=0;i<N*N;i++) if(g[i]){start=i;break;}
+  const seen = new Set([start]);
+  const stack=[start];
+  while(stack.length){
+    const p = stack.pop();
+    const r = Math.floor(p/N), c = p%N;
+    [[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([rr,cc])=>{
+      if(rr<0||rr>=N||cc<0||cc>=N) return;
+      const q = idx(rr,cc);
+      if(g[q] && !seen.has(q)){ seen.add(q); stack.push(q); }
+    });
+  }
+  return seen.size===total;
+}
+function cornersSame(g){
+  if(count(g)===0) return false;
+  const a=g[idx(0,0)], b=g[idx(0,N-1)], c=g[idx(N-1,0)], d=g[idx(N-1,N-1)];
+  return a===b && b===c && c===d;
+}
+function borderOnly(g){
+  if(count(g)===0) return false;
+  for(let r=1;r<N-1;r++) for(let c=1;c<N-1;c++)
+    if(g[idx(r,c)]) return false;
+  return true;
+}
+function rot180(g){
+  if(count(g)===0) return false;
+  for(let i=0;i<N*N;i++) if(g[i]!==g[N*N-1-i]) return false;
+  return true;
+}
+function solidRect(g){
+  if(count(g)===0) return false;
+  let r0=N,r1=-1,c0=N,c1=-1;
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++) if(g[idx(r,c)]){
+    r0=Math.min(r0,r); r1=Math.max(r1,r);
+    c0=Math.min(c0,c); c1=Math.max(c1,c);
+  }
+  for(let r=r0;r<=r1;r++) for(let c=c0;c<=c1;c++)
+    if(!g[idx(r,c)]) return false;
+  return true;
+}
+function colsEqual(g){
+  const k = colCount(g,0);
+  if(k===0) return false;
+  for(let c=1;c<N;c++) if(colCount(g,c)!==k) return false;
+  return true;
+}
+function eachRowOne(g){
+  for(let r=0;r<N;r++) if(rowCount(g,r)!==1) return false;
+  return true;
+}
+function permutation(g){
+  for(let r=0;r<N;r++) if(rowCount(g,r)!==1) return false;
+  for(let c=0;c<N;c++) if(colCount(g,c)!==1) return false;
+  return true;
+}
+
+/* ---------- 레벨 데이터 (검증 완료: 72개 예시) ---------- */
+const LEVELS = [
+  { numeral:"一", judge:g=>count(g)===3,
+    pos:["1100000000010000","0000011000001000","0010000001000010"],
+    neg:["1111000000000000","1000000000000000","0000110000111000"] },
+
+  { numeral:"二", judge:mirrorLR,
+    pos:["0110000010010000","1001011000001111","0000011001100000"],
+    neg:["1100000000000000","0110100000000000","1100000000001100"] },
+
+  { numeral:"三", judge:eachRowOne,
+    pos:["1000010000100001","0010001010000001","0001100010000100"],
+    neg:["1100001000011000","0000010000100001","1000010000100000"] },
+
+  { numeral:"四", judge:noAdjacent,
+    pos:["1010000010100000","0100101000000001","1000001000000101"],
+    neg:["1100000000000000","1000100000000010","0010011000000000"] },
+
+  { numeral:"五", judge:connected,
+    pos:["1100010001000000","0000011100010001","0000001001100000"],
+    neg:["1100000000110000","1000000000000001","1110000001100000"] },
+
+  { numeral:"六", judge:cornersSame,
+    pos:["1001000001001001","0110000000100110","1111000000001111"],
+    neg:["1000000000000001","1001000000001000","0110000000000001"] },
+
+  { numeral:"七", judge:borderOnly,
+    pos:["0110000010000010","1000000100000110","1111100110011111"],
+    neg:["0000011000000000","1100010000000000","1111111100000000"] },
+
+  { numeral:"八", judge:g=>{const k=count(g); return k>0 && k%2===0;},
+    pos:["1000000000000001","0110011000000000","1010010110100000"],
+    neg:["0010000000000000","1000010000100000","1100001110000000"] },
+
+  { numeral:"九", judge:rot180,
+    pos:["0100000000000010","1000011001100001","0010010000100100"],
+    neg:["0110100100000000","1000000000000000","1100000000000110"] },
+
+  { numeral:"十", judge:solidRect,
+    pos:["0000011001100000","1110111000000000","0001000100010001"],
+    neg:["0110010000000000","1100001100000000","1110101011100000"] },
+
+  { numeral:"十一", judge:colsEqual,
+    pos:["1111111100000000","1010010101011010","1000010000100001"],
+    neg:["1100000000000000","1111100000000000","1000100001000010"] },
+
+  { numeral:"十二", judge:permutation,
+    pos:["0100100000010010","0001010010000010","0010000101001000"],
+    neg:["1000010000100000","1000100001000010","1100001000010000"] }
+];
+
+/* ---------- 상태 ---------- */
+const solved = new Array(LEVELS.length).fill(false);
+let current = -1;
+let grid = new Array(N*N).fill(0);
+
+/* ---------- DOM ---------- */
+const $ = id => document.getElementById(id);
+const homeEl = $("home"), levelEl = $("level");
+const levelsEl = $("levels"), boardEl = $("board");
+const posRow = $("posRow"), negRow = $("negRow");
+const numeralEl = $("numeral"), solvedMark = $("solvedMark");
+const stampEl = $("stamp"), noticeEl = $("notice");
+
+/* 진동 피드백 (지원 기기만) */
+function haptic(pattern){
+  if(navigator.vibrate){ try{ navigator.vibrate(pattern); }catch(e){} }
+}
+
+/* 홈 화면 카드 — HTML에 정적으로 존재, 상태만 갱신 */
+const cardEls = Array.from(levelsEl.querySelectorAll(".level-card"));
+cardEls.forEach(b=>{
+  b.addEventListener("click", ()=>openLevel(Number(b.dataset.i)));
+});
+function renderHome(){
+  cardEls.forEach((b,i)=>{
+    b.classList.toggle("solved", solved[i]);
+    b.setAttribute("aria-label", "레벨 " + (i+1) + (solved[i] ? " (해결됨)" : ""));
+  });
+}
+
+/* 미니 예시 격자 */
+function miniGrid(str){
+  const m = document.createElement("div");
+  m.className = "mini";
+  m.setAttribute("aria-hidden","true");
+  for(let i=0;i<N*N;i++){
+    const d = document.createElement("div");
+    if(str[i]==="1") d.classList.add("f");
+    m.appendChild(d);
+  }
+  return m;
+}
+
+/* 답안 보드 */
+function renderBoard(){
+  boardEl.innerHTML = "";
+  for(let i=0;i<N*N;i++){
+    const b = document.createElement("button");
+    b.setAttribute("aria-label","칸 "+(Math.floor(i/N)+1)+"행 "+(i%N+1)+"열");
+    b.addEventListener("click", ()=>{
+      grid[i] = grid[i] ? 0 : 1;
+      b.classList.toggle("f", !!grid[i]);
+      haptic(8);
+      hideNotice();
+    });
+    boardEl.appendChild(b);
+  }
+}
+
+function clearBoard(){
+  grid.fill(0);
+  Array.from(boardEl.children).forEach(b=>b.classList.remove("f"));
+  hideNotice();
+}
+
+/* 화면 전환 */
+function openLevel(i){
+  current = i;
+  const lv = LEVELS[i];
+  numeralEl.textContent = lv.numeral;
+  solvedMark.classList.toggle("show", solved[i]);
+  posRow.innerHTML = ""; negRow.innerHTML = "";
+  lv.pos.forEach(s=>posRow.appendChild(miniGrid(s)));
+  lv.neg.forEach(s=>negRow.appendChild(miniGrid(s)));
+  clearBoard();
+  homeEl.classList.add("hidden");
+  levelEl.classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+
+function goHome(){
+  renderHome();
+  levelEl.classList.add("hidden");
+  homeEl.classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+
+/* 알림 */
+let noticeTimer = null;
+function showNotice(text){
+  noticeEl.textContent = text;
+  noticeEl.classList.add("show");
+  clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(hideNotice, 3200);
+}
+function hideNotice(){
+  noticeEl.classList.remove("show");
+}
+
+/* 판정 도장 */
+function stamp(ok){
+  stampEl.classList.remove("play");
+  void stampEl.offsetWidth; /* 애니메이션 재시작 */
+  stampEl.innerHTML = ok
+    ? '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42"/></svg>'
+    : '<svg viewBox="0 0 100 100"><line x1="22" y1="22" x2="78" y2="78"/><line x1="78" y1="22" x2="22" y2="78"/></svg>';
+  stampEl.classList.add("play");
+}
+
+/* 판정 */
+function judge(){
+  const lv = LEVELS[current];
+  const gs = grid.join("");
+
+  if(count(grid)===0){
+    showNotice("빈 격자는 답이 아니다.");
+    return;
+  }
+  if(lv.pos.includes(gs)){
+    showNotice("예시와 같은 답 — 스스로의 답이 필요하다.");
+    return;
+  }
+
+  const ok = lv.judge(grid.slice());
+  stamp(ok);
+  haptic(ok ? [30,60,30] : 80);
+
+  if(ok && !solved[current]){
+    solved[current] = true;
+    solvedMark.classList.add("show");
+  }
+}
+
+/* 이벤트 */
+$("backBtn").addEventListener("click", goHome);
+$("clearBtn").addEventListener("click", clearBoard);
+$("judgeBtn").addEventListener("click", judge);
+
+/* iOS 더블탭 확대 방지 보강 */
+let lastTouch = 0;
+document.addEventListener("touchend", e=>{
+  const now = Date.now();
+  if(now - lastTouch < 300) e.preventDefault();
+  lastTouch = now;
+}, {passive:false});
+
+renderBoard();
+renderHome();
+})();
+</script>
+</body>
+</html>
